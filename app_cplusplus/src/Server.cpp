@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
+#include <iostream>
 
 int guessingNumber = 234;
 
@@ -21,14 +22,23 @@ bool is_number(const std::string &s) {
         boost::asio::ip::tcp::socket socket(io_service);
         acceptor.accept(socket);
 
+boost::asio::ip::tcp::endpoint endpoint = socket.remote_endpoint();
+std::cout << "Connected to: " << endpoint.address() << ':' << endpoint.port() << '\n';
+
         boost::asio::streambuf buffer;
         boost::asio::read_until(socket, buffer, "\r\n\r\n");
 
         std::string method, path, http_version;
         std::istream request_stream(&buffer);
         request_stream >> method >> path >> http_version;
+std::cout << method << '\n' << path << "\n\n";
 
-        std::string response = "HTTP/1.1 200 OK\r\n"
+        if (path.find("/metrics") != std::string::npos) {
+            std::string response = "HTTP/1.1 200 OK\r\n"
+                               "Content-Type: text/html\r\n\r\n # HELP process_cpu_seconds_total Descriotion\n # TYPE process_cpu_seconds_total gauge\n\nprocess_cpu_seconds_total 1.01";
+            boost::asio::write(socket, boost::asio::buffer(response));
+        } else {
+            std::string response = "HTTP/1.1 200 OK\r\n"
                                "Content-Type: text/html\r\n\r\n";
 
 
@@ -60,5 +70,6 @@ bool is_number(const std::string &s) {
         }
 
         boost::asio::write(socket, boost::asio::buffer(response));
+        }
     }
 }
