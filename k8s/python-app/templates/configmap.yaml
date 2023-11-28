@@ -1,0 +1,10 @@
+{{- if .Values.configenvs.enabled }}
+apiVersion: v1
+kind: ConfigMap
+data:
+  key2: "value2"
+  config.json: |-
+{{ .Files.Get "files/config.json" | indent 4}}
+metadata:
+  name: myconfigmap
+{{- end }}
